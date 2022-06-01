@@ -7,16 +7,31 @@ import os
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './static/uploads/'
-model = load_model('model.h5')
+model = load_model('adam.h5')
+class_dict = {0:'Cendrawasih Kuning Besar', 1:'Jalak Bali', 2:'Kakak Tua Putih Jambul Kuning', 3:'Kasuari', 4:'Lain-lain',
+                   5:'Maleo', 6:'Merak Biru'}
 
-class_dict = {0: 'Cat (Kucing)', 1: 'Dog (Anjing)'}
-
-def predict_label(img_path):
-    loaded_img = load_img(img_path, target_size=(256, 256))
+def predict(img_path):
+    loaded_img = load_img(img_path, target_size=(150, 150))
     img_array = img_to_array(loaded_img) / 255.0
-    img_array = expand_dims(img_array, 0)
-    predicted_bit = np.round(model.predict(img_array)[0][0]).astype('int')
-    return class_dict[predicted_bit]
+    img_array = expand_dims(img_array, [0])
+    predicted = model.predict(img_array)
+    predicted = predicted.argmax(axis=-1)
+    y = " ".join(str(x) for x in predicted)#mengambil nilai terbesar
+    y = int(y)
+    res = class_dict[y]
+    return res
+
+def predict_array(img_path):
+    loaded_img = load_img(img_path, target_size=(150, 150))
+    img_array = img_to_array(loaded_img) / 255.0
+    img_array = expand_dims(img_array, [0])
+    predicted = model.predict(img_array)
+    predicted = predicted[0] * 100
+    res = {}
+    for idx,a in enumerate(class_dict.values()):
+        res[a] = predicted[idx]
+    return res
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -25,8 +40,12 @@ def index():
             image = request.files['image']
             img_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
             image.save(img_path)
-            prediction = predict_label(img_path)
-            return render_template('index.html', uploaded_image=image.filename, prediction=prediction)
+            out_array = True
+            if out_array:
+                 prediction = predict_array(img_path)
+            else:
+                prediction = predict_array(img_path)
+            return render_template('index.html', uploaded_image=image.filename, prediction=prediction, out_array=out_array)
 
     return render_template('index.html')
 

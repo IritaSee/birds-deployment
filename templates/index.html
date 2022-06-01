@@ -55,8 +55,16 @@
                         Masukkan gambar kucing atau anjing
                     </p>
                 </div>
-                {% endif %} {% if prediction %}
-                <p class="mb-8">Hasil Prediksi: {{prediction}}</p>
+                {% endif %} {% if not out_array %}
+                <p class="mb-8">Hasil Prediksi: <br> {{prediction}}</p>
+                {% endif %}
+                {% if out_array %}
+                <p class="mb-8">Hasil Prediksi:
+                    {% for key, value in prediction.items() %}
+                    <p>{{key}} : </p>
+                    <p>{{value}}</p>
+                    {% endfor %}
+                </p>
                 {% endif %}
 
                 <form
